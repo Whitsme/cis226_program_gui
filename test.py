@@ -1,98 +1,120 @@
-from rich.align import Align
-from rich.box import DOUBLE
-from rich.console import RenderableType
-from rich.panel import Panel
-from rich.style import Style
-from rich.text import Text
+from rich.table import Table
+
 from textual import events
 from textual.app import App
-from textual.reactive import Reactive
-from textual.widget import Widget
-from textual.widgets import Button
-from textual.widgets import Button, ButtonPressed
+from textual.widgets import ScrollView
 
 
-class Submit(Button):
+class MyApp(App):
+    """An example of a very simple Textual App"""
 
-    clicked: Reactive[RenderableType] = Reactive(False)
+    async def on_load(self, event: events.Load) -> None:
+        await self.bind("q", "quit", "Quit")
 
-    def on_click(self) -> None:
-        self.clicked = True
+    async def on_mount(self, event: events.Mount) -> None:
 
+        self.body = body = ScrollView(auto_width=True)
 
-class InputText(Widget):
+        await self.view.dock(body)
 
-    title: Reactive[RenderableType] = Reactive("")
-    content: Reactive[RenderableType] = Reactive("")
-    mouse_over: Reactive[RenderableType] = Reactive(False)
+        async def add_content():
+            table = Table(title="Demo")
 
-    def __init__(self, title: str):
-        super().__init__(title)
-        self.title = title
+            for i in range(20):
+                table.add_column(f"Col {i + 1}", style="magenta")
+            for i in range(100):
+                table.add_row(*[f"cell {i},{j}" for j in range(20)])
 
-    def on_enter(self) -> None:
-        self.mouse_over = True
+            await body.update(table)
 
-    def on_leave(self) -> None:
-        self.mouse_over = False
-
-    def on_key(self, event: events.Key) -> None:
-        if self.mouse_over == True:
-            if event.key == "ctrl+h":
-                self.content = self.content[:-1]
-            else:
-                self.content += event.key
-
-    def validate_title(self, value) -> None:
-        try:
-            return value.lower()
-        except (AttributeError, TypeError):
-            raise AssertionError("title attribute should be a string.")
-
-    def render(self) -> RenderableType:
-        renderable = None
-        if self.title.lower() == "password":
-            renderable = "".join(map(lambda char: "*", self.content))
-        else:
-            renderable = Align.left(Text(self.content, style="bold"))
-        return Panel(
-            renderable,
-            title=self.title,
-            title_align="center",
-            height=3,
-            style="bold white on rgb(50,57,50)",
-            border_style=Style(color="green"),
-            box=DOUBLE,
-        )
+        await self.call_later(add_content)
 
 
-class MainApp(App):
-    submit: Reactive[RenderableType] = Reactive(False)
-    username: Reactive[RenderableType] = Reactive("")
-    password: Reactive[RenderableType] = Reactive("")
-
-    def handle_button_pressed(self, message: ButtonPressed) -> None:
-        """A message sent by the submit button"""
-        assert isinstance(message.sender, Button)
-        button_name = message.sender.name
-        self.submit = message.sender.clicked
-        if button_name == "submit" and self.submit:
-            self.submit_button.clicked = False
-            self.username = self.username_field.content
-            self.password = self.password_field.content
-            self.log(f"username = {self.username}")
-
-    async def on_mount(self) -> None:
-        self.submit_button = Submit(
-            label="Submit", name="submit", style="black on white"
-        )
-        self.submit = self.submit_button.clicked
-        self.username_field = InputText("username")
-        self.password_field = InputText("password")
-        await self.view.dock(self.submit_button, edge="bottom", size=3)
-        await self.view.dock(self.username_field, edge="left", size=50)
-        await self.view.dock(self.password_field, edge="left", size=50)
+MyApp.run(title="Simple App", log="textual.log")
 
 
-if __name__ == "__main__":
-    MainApp.run(log="textual.log")
+# class FileMenu(Widget):
+#     title: Reactive[RenderableType] = Reactive("")
+#     content: Reactive[RenderableType] = Reactive("")
+#     mouse_over: Reactive[RenderableType] = Reactive(False)
+
+#     def __init__(self, title: str):
+#         super().__init__(title)
+#         self.title = title
+
+#     def on_enter(self) -> None:
+#         self.mouse_over = True
+
+#     def on_leave(self) -> None:
+#         self.mouse_over = False
+
+#     def on_mount(self):
+#         self.panel = Panel(
+#                 title="File",
+#                 title_alight="center",
+#             )
+
+# class ShowQuit(Widget):
+#     title: Reactive[RenderableType] = Reactive("")
+#     content: Reactive[RenderableType] = Reactive("")
+#     mouse_over: Reactive[RenderableType] = Reactive(False)
+
+#     def __init__(self, title: str):
+#         super().__init__(title)
+#         self.title = title
+
+#     def on_enter(self) -> None:
+#         self.mouse_over = True
+
+#     def on_leave(self) -> None:
+#         self.mouse_over = False
+
+#     def on_mount(self):
+#         self.panel = Panel(
+#                 title="Quit",
+#                 title_alight="center",
+#             )
+
+# class HelpMenu(Widget):
+
+#     title: Reactive[RenderableType] = Reactive("")
+#     content: Reactive[RenderableType] = Reactive("")
+#     mouse_over: Reactive[RenderableType] = Reactive(False)
+    
+#     def __init__(self, title: str):
+#         super().__init__(title)
+#         self.title = title
+     
+#     def on_enter(self) -> None:
+#         self.mouse_over = True
+
+#     def on_leave(self) -> None:
+#         self.mouse_over = False
+
+#     def on_mount(self):
+#         self.panel = Panel(
+#                 title="Help",
+#                 title_alight="center",
+#             )
+
+# class ShowAbout(Widget):
+
+#     title: Reactive[RenderableType] = Reactive("")
+#     content: Reactive[RenderableType] = Reactive("")
+#     mouse_over: Reactive[RenderableType] = Reactive(False)
+
+#     def __init__(self, title: str):
+#         super().__init__(title)
+#         self.title = title
+
+#     def on_enter(self) -> None:
+#         self.mouse_over = True
+
+#     def on_leave(self) -> None:
+#         self.mouse_over = False
+
+#     def on_mount(self):
+#         self.panel = Panel(
+#                 title="About",
+#                 title_alight="center",
+#             )
